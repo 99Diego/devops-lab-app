@@ -43,17 +43,18 @@ pipeline {
                 '''
             }
         }
-
-        stage('Deploy to EKS') {
-            steps {
-                echo "🚀 Deploying to EKS..."
-                sh '''
-                    aws eks update-kubeconfig --name devopslab-cluster --region $AWS_REGION
-                    kubectl apply -f k8s/
-                '''
-            }
+	
+	stage('Deploy to EKS') {
+    steps {
+        echo '🚀 Deploying to EKS...'
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+            sh '''
+                aws eks update-kubeconfig --name devopslab-cluster --region us-east-1
+                kubectl apply -f k8s/
+            '''
         }
     }
+}
 
     post {
         always {
