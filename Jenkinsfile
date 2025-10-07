@@ -3,33 +3,62 @@ pipeline {
 
     environment {
         AWS_REGION = 'us-east-1'
-        ECR_REPO = '152735632105.dkr.ecr.us-east-1.amazonaws.com/devops-lab-app'
-        IMAGE_TAG = "latest"
+        AWS_ACCOUNT_ID = '152735632105'
+        REPO_NAME = 'devops-lab-app'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99Diego99DiegoDeploy to EKS') {
+                echo "📥 Cloning repository..."
+                git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/99Diego/devops-lab-app.git'
+            }
+        }
+
+        stage('Build Docker Image') {
             steps {
-                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
-                    sh """
-                    echo '🧩 Deploying to EKS...'
-                    aws eks update-kubeconfig --region $AWS_REGION --name devopslab-cluster
-                    kubectl set image deployment/devops-lab-app devops-lab-app=${ECR_REPO}:${IMAGE_TAG} --record
-                    kubectl rollout status deployment/devops-lab-app
-                    """
-                }
+                echo "🐳 Building Docker image..."
+                sh 'docker build -t $REPO_NAME .'
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                echo "🔐 Logging into AWS ECR..."
+                sh '''
+                    aws ecr get-login-password --region $AWS_REGION | \
+                    docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                '''
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                echo "📦 Pushing image to ECR..."
+                sh '''
+                    docker tag $REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:latest
+                    docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:latest
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                echo "🚀 Deploying to EKS..."
+                sh '''
+                    aws eks update-kubeconfig --name devopslab-cluster --region $AWS_REGION
+                    kubectl apply -f k8s/
+                '''
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Deployment successful!'
+        always {
+            echo "✅ Pipeline completed (success or fail)."
         }
         failure {
-            echo '❌ Pipeline failed. Check logs.'
+            echo "❌ Pipeline failed. Check logs."
         }
     }
 }
