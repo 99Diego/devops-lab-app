@@ -8,6 +8,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 echo "📥 Cloning repository..."
@@ -22,17 +23,17 @@ pipeline {
             }
         }
 
-	stage('Login to AWS ECR') {
-    steps {
-        echo '🔐 Logging into AWS ECR...'
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-            sh '''
-                aws ecr get-login-password --region us-east-1 | \
-                docker login --username AWS --password-stdin 152735632105.dkr.ecr.us-east-1.amazonaws.com
-            '''
+        stage('Login to AWS ECR') {
+            steps {
+                echo '🔐 Logging into AWS ECR...'
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | \
+                        docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Push to ECR') {
             steps {
@@ -43,18 +44,19 @@ pipeline {
                 '''
             }
         }
-	
-	stage('Deploy to EKS') {
-    steps {
-        echo '🚀 Deploying to EKS...'
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-            sh '''
-                aws eks update-kubeconfig --name devopslab-cluster --region us-east-1
-                kubectl apply -f k8s/
-            '''
+
+        stage('Deploy to EKS') {
+            steps {
+                echo '🚀 Deploying to EKS...'
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    sh '''
+                        aws eks update-kubeconfig --name devopslab-cluster --region $AWS_REGION
+                        kubectl apply -f k8s/
+                    '''
+                }
+            }
         }
     }
-}
 
     post {
         always {
@@ -62,6 +64,9 @@ pipeline {
         }
         failure {
             echo "❌ Pipeline failed. Check logs."
+        }
+        success {
+            echo "🎉 Deployment successful!"
         }
     }
 }
