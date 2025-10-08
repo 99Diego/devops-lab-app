@@ -1,7 +1,7 @@
 # DevOps Lab App - Terraform + Flask + Docker + Jenkins + AWS EKS
 
 ## Project Overview
-This project demonstrates a complete DevOps workflow — **from Infrastructure as Code (IaC) with Terraform to Continuous Integration and Delivery (CI/CD) with Jenkins, deploying a Flask application on AWS EKS (Elastic Kubernetes Service).**
+This project demonstrates a complete DevOps workflow — **from Infrastructure as Code (IaC) with Terraform to Continuous Integration and Delivery (CI/CD) with Jenkins, deploying a Flask application on AWS Elastic Kubernetes Service(EKS).**
 
 It automates everything:
 1. Infrastructure provisioning (ECR, VPC, EKS Cluster, Node Group)
@@ -121,8 +121,78 @@ ECR repository URL: 152735632105.dkr.ecr.us-east-1.amazonaws.com/devops-lab-app
 
 ---
 
-## Jenkins Pipeline - CI/CD Flow
-After infrastructure provisioning, Jenkins automates the app build and deployment.
+## 2. Docker Image - Flask Application 
+The application is fully containerized using **Docker** for portability and consistency accross environments.
+
+***Dockerfile:***
+```
+dockerfile
+# Base image
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . /app
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose Flask port
+EXPOSE 5000
+
+# Start the application
+CMD ["python", "app.py"]
+
+# Base image
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . /app
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose Flask port
+EXPOSE 5000
+
+# Start the application
+CMD ["python", "app.py"]
+```
+How it works:
+- Base image: Official lightweight Python 3.10.
+
+- Dependencies: Installed from requirements.txt.
+
+- Execution: Runs Flask app on port 5000.
+
+- Port mapping: Kubernetes exposes it via AWS Load Balancer (port 80 → 5000).
+
+***Local Test (optional)***
+```
+bash
+docker build -t devops-lab-app .
+docker run -p 5000:5000 devops-lab-app
+```
+then open:
+```
+arduino
+http://localhost:5000
+```
+Output:
+```
+csharp
+🚀 Hello from DevOps Lab on AWS EKS!
+```
+
+---
+
+## 3. Jenkins Pipeline - CI/CD Flow
+Once the infrastructure is ready, Jenkins automates the build and deployment pipeline.
 | Stage                  | Description                                  |
 | ---------------------- | -------------------------------------------- |
 | **Checkout Code**      | Clones the source from GitHub.               |
@@ -203,7 +273,7 @@ pipeline {
 
 ---
 
-## Kubernetes Manifests
+## 4. Kubernetes Manifests
 ***deployment.yaml***
 ```
 yaml 
