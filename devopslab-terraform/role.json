@@ -1,0 +1,39 @@
+{
+    "Role": {
+        "Path": "/",
+        "RoleName": "default-eks-node-group-20251007162249074700000001",
+        "RoleId": "AROASHD6AZLUQWFMENJZL",
+        "Arn": "arn:aws:iam::152735632105:role/default-eks-node-group-20251007162249074700000001",
+        "CreateDate": "2025-10-07T16:22:49+00:00",
+        "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "EKSNodeAssumeRole",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": "ec2.amazonaws.com"
+			"AWS": "arn:aws:iam::152735632105:user/terraform-user"
+                    },
+                    "Action": "sts:AssumeRole"
+                }
+            ]
+        },
+        "Description": "EKS managed node group IAM role",
+        "MaxSessionDuration": 3600,
+        "Tags": [
+            {
+                "Key": "Project",
+                "Value": "DevOps-Lab"
+            },
+            {
+                "Key": "Environment",
+                "Value": "dev"
+            }
+        ],
+        "RoleLastUsed": {
+            "LastUsedDate": "2025-10-07T16:49:49+00:00",
+            "Region": "us-east-1"
+        }
+    }
+}
